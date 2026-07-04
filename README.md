@@ -1,4 +1,4 @@
-# BeejRakshak
+# CropWise
 
 **Farmer-first AgriTech platform**: mandi recommendations, government scheme matching, SAR-based field monitoring, and registration/auth — web, mobile, and APIs.
 
@@ -100,4 +100,4 @@ BeejRakshak/
 
 ---
 
-*BeejRakshak — built for farmers.*
+*CropWise — built for farmers.*
