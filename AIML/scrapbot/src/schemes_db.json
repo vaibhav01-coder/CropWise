@@ -1,0 +1,52 @@
+[
+    {
+        "id": "SCH-100",
+        "name": "Pradhan Mantri Fasal Bima Yojana",
+        "description": "Central government crop insurance against natural calamities and pests.",
+        "scope": "Central",
+        "tags": [
+            "all_farmers"
+        ],
+        "eligibility_text": "All farmers including sharecroppers."
+    },
+    {
+        "id": "SCH-101",
+        "name": "Mukhyamantri Kisan Sahay Yojana (Gujarat)",
+        "description": "Gujarat state scheme replacing insurance companies. Zero premium coverage.",
+        "scope": "Gujarat",
+        "tags": [
+            "all_farmers"
+        ],
+        "eligibility_text": "Farmers in Gujarat with land < 4 hectares."
+    },
+    {
+        "id": "SCH-102",
+        "name": "PM Kisan Samman Nidhi",
+        "description": "Income support of Rs. 6000 per year in 3 installments.",
+        "scope": "All",
+        "tags": [
+            "small_farmer"
+        ],
+        "eligibility_text": "Small and marginal farmers (< 2 hectares)."
+    },
+    {
+        "id": "SCH-103",
+        "name": "Telangana Rythu Bandhu",
+        "description": "Investment support for agriculture and horticulture crops.",
+        "scope": "All",
+        "tags": [
+            "all_farmers"
+        ],
+        "eligibility_text": "Farmers in Telangana."
+    },
+    {
+        "id": "SCH-104",
+        "name": "Soil Health Card Scheme",
+        "description": "Subsidized soil testing and fertilizer recommendations.",
+        "scope": "All",
+        "tags": [
+            "all_farmers"
+        ],
+        "eligibility_text": "All farmers."
+    }
+]
