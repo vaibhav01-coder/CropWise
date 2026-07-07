@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchFarmWeatherBundle } from "../lib/farmWeather";
+const mandiBase = import.meta.env.VITE_MANDI_API_BASE || "/mandi-api";
 
 /* ── Crop list with Emojis ── */
 const CROP_OPTIONS = [
@@ -134,9 +135,9 @@ export default function FertilizerAdvisor({ profile }) {
         crop, season, land_size_ha: String(area), district,
         ndvi: String(ndvi), rainfall: String(rainfall),
       });
-      let res = await fetch(`/mandi-api/api/fertilizer/recommend?${params}`);
+      let res = await fetch(`${mandiBase}/api/fertilizer/recommend?${params}`);
       if (res.status === 404) {
-        res = await fetch(`/mandi-api/mandi/api/fertilizer/recommend?${params}`);
+       res = await fetch(`${mandiBase}/mandi/api/fertilizer/recommend?${params}`);
       }
       if (!res.ok) {
         const body = await res.text();
