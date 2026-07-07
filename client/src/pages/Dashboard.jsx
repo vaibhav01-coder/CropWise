@@ -4,6 +4,7 @@ import { loadRegistration } from "../lib/registration";
 import { fetchFarmWeatherBundle } from "../lib/farmWeather";
 import { GoogleTranslateWidget } from "../translation";
 import GovernmentSchemes from "../components/GovernmentSchemes";
+import DiseaseCheckUpload from "../components/DiseaseCheckUpload";
 import FertilizerAdvisor from "../components/FertilizerAdvisor";
 
 /* â”€â”€â”€ SVG icon paths â”€â”€â”€ */
@@ -44,6 +45,7 @@ const NAV_ITEMS = [
   { id: "mandi", label: "Mandi Prices", icon: ICONS.mandi },
   { id: "advisory", label: "Crop Advisory", icon: ICONS.advisory },
   { id: "fertilizer", label: "Fertilizer Plan", icon: ICONS.fertilizer },
+  { id: "disease", label: "Disease Scan", icon: ICONS.imageQuality },
   { id: "schemes", label: "Govt Schemes", icon: ICONS.schemes },
   { id: "alerts", label: "Alert System", icon: ICONS.alerts },
   { id: "calendar", label: "Adaptive Calendar", icon: ICONS.calendar },
@@ -257,6 +259,7 @@ export default function Dashboard({ session, onSignOut }) {
           {activeTab === "mandi" && <MandiTab profile={profile} />}
           {activeTab === "advisory" && <AdvisoryTab profile={profile} />}
           {activeTab === "fertilizer" && <FertilizerAdvisor profile={profile} />}
+          {activeTab === "disease" && <DiseaseCheckUpload profile={profile} />}
           {activeTab === "schemes" && <GovernmentSchemes profile={profile} />}
           {activeTab === "alerts" && <AlertSystemTab profile={profile} />}
           {activeTab === "calendar" && (
@@ -4401,4 +4404,3 @@ function cap(s) {
   if (!s) return "";
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
-

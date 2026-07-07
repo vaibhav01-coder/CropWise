@@ -23,6 +23,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (proxyPath) => proxyPath.replace(/^\/schemes-api/, '/schemes'),
       },
+      '/disease-api': {
+        target: AIML_TARGET,
+        changeOrigin: true,
+        rewrite: (proxyPath) => proxyPath.replace(/^\/disease-api/, '/disease'),
+      },
       // PMFBY PDFs only; avoid using '/schemes' alone.
       '/schemes/static': { target: AIML_TARGET, changeOrigin: true },
     },

@@ -8,4 +8,6 @@ fpdf
 beautifulsoup4
 requests
 httpx
-
+tensorflow==2.16.1
+pillow>=10.3.0
+python-multipart>=0.0.9
