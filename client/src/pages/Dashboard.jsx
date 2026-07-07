@@ -1095,39 +1095,39 @@ function OverviewTab({ session, profile, greeting, onOpenProfile }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
               <InfoRow
                 label="Farmer Name"
-                value={profile?.farmer_name || session?.name || "—"}
+                value={profile?.farmer_name || session?.name || "ï¿½"}
               />
               <InfoRow
                 label="Mobile"
-                value={profile?.mobile || session?.mobile || "—"}
+                value={profile?.mobile || session?.mobile || "ï¿½"}
               />
               <InfoRow
                 label="Language"
                 value={
                   profile?.preferred_language
                     ? cap(profile.preferred_language)
-                    : "—"
+                    : "ï¿½"
                 }
               />
               <InfoRow
                 label="Primary Crop"
-                value={profile?.primary_crop ? cap(profile.primary_crop) : "—"}
+                value={profile?.primary_crop ? cap(profile.primary_crop) : "ï¿½"}
               />
               <InfoRow
                 label="Crop Stage"
-                value={profile?.crop_stage ? cap(profile.crop_stage) : "—"}
+                value={profile?.crop_stage ? cap(profile.crop_stage) : "ï¿½"}
               />
               <InfoRow
                 label="Land Area"
                 value={
                   profile?.land_area
                     ? `${profile.land_area} ${profile.land_unit || ""}`
-                    : "—"
+                    : "ï¿½"
                 }
               />
-              <InfoRow label="Village" value={profile?.village || "—"} />
-              <InfoRow label="District" value={profile?.district || "—"} />
-              <InfoRow label="State" value={profile?.state || "—"} />
+              <InfoRow label="Village" value={profile?.village || "ï¿½"} />
+              <InfoRow label="District" value={profile?.district || "ï¿½"} />
+              <InfoRow label="State" value={profile?.state || "ï¿½"} />
               <InfoRow label="Market" value="Mandi" />
             </div>
           </div>        {/* SAR Status */}
