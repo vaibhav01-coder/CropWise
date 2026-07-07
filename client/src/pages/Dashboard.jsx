@@ -1130,7 +1130,10 @@ function OverviewTab({ session, profile, greeting, onOpenProfile }) {
               <InfoRow label="State" value={profile?.state || "�"} />
               <InfoRow label="Market" value="Mandi" />
             </div>
-          </div>        {/* SAR Status */}
+          </div>
+        </div>
+
+        {/* SAR Status */}
         <div className="rounded-2xl bg-white border border-stone-200/80 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-stone-100">
             <h3 className="font-bold text-stone-800">SAR Satellite</h3>
