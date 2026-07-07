@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth'
 import Login from './pages/Login'
 import Registration from './pages/Registration'
 import Dashboard from './pages/Dashboard'
+import Profile from './pages/Profile'
 import { TranslationProvider } from './translation/TranslationProvider'
 
 function App() {
@@ -70,6 +71,18 @@ function App() {
               : !registrationComplete
                 ? <Navigate to="/registration" replace />
                 : <Dashboard session={session} onSignOut={signOut} />
+          }
+        />
+
+        {/* Profile: only accessible when logged in and registered */}
+        <Route
+          path="/profile"
+          element={
+            !session
+              ? <Navigate to="/login" replace />
+              : !registrationComplete
+                ? <Navigate to="/registration" replace />
+                : <Profile session={session} onSignOut={signOut} onProfileUpdated={refresh} />
           }
         />
 

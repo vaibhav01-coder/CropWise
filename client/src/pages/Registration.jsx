@@ -28,18 +28,22 @@ const LAND_UNITS = [
   { value: 'hectare', label: 'Hectare' },
 ]
 
-const MARKET_OPTIONS = [
-  { value: 'nearest_mandi', label: 'Nearest mandi', icon: '🏪', desc: 'Government-regulated market' },
-  { value: 'local_trader', label: 'Local trader', icon: '🤝', desc: 'Direct buyer at farm gate' },
-  { value: 'cooperative', label: 'Cooperative', icon: '🏛️', desc: 'Farmer cooperative / FPO' },
-]
+const INDIAN_MOBILE_REGEX = /^[6-9]\d{9}$/
+const LOCATION_TEXT_REGEX = /^[A-Za-z][A-Za-z\s.,'-]*$/
+
+function isValidLocationText(value) {
+  const trimmed = (value || '').trim()
+  if (!trimmed) return false
+  if (!/[A-Za-z]/.test(trimmed)) return false
+  if (/^[0-9\s.,'-]+$/.test(trimmed)) return false
+  return LOCATION_TEXT_REGEX.test(trimmed)
+}
 
 const STEPS = [
   { id: 'identity', label: 'Identity', icon: 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0' },
   { id: 'location', label: 'Location', icon: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z' },
   { id: 'farm', label: 'Farm', icon: 'M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z' },
   { id: 'satellite', label: 'Satellite', icon: 'M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' },
-  { id: 'market', label: 'Market', icon: 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z' },
 ]
 
 function Label({ children, required }) {
@@ -55,11 +59,12 @@ export default function Registration({ session, onComplete, onSignOut }) {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [currentStep, setCurrentStep] = useState(0)
-
-  const mobileFromAuth = session?.mobile ?? ''
+  const [mobileTouched, setMobileTouched] = useState(false)
+  const [locationMessage, setLocationMessage] = useState('')
 
   const [form, setForm] = useState({
     farmerName: session?.name || '',
+    mobile: session?.mobile || '',
     aadhaar: '',
     preferredLanguage: '',
     village: '',
@@ -72,13 +77,21 @@ export default function Registration({ session, onComplete, onSignOut }) {
     primaryCrop: '',
     cropStage: '',
     satelliteConsent: true,
-    marketPreference: '',
+    marketPreference: 'mandi',
   })
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }))
 
+  const mobileOnly = (v) => v.replace(/\D/g, '').slice(0, 10)
   const aadhaarNumericOnly = (v) => v.replace(/\D/g, '').slice(0, 12)
   const landAreaNumeric = (v) => v.replace(/[^\d.]/g, '').slice(0, 10)
+
+  const mobileError =
+    mobileTouched && form.mobile && !INDIAN_MOBILE_REGEX.test(form.mobile)
+      ? 'Enter a valid 10-digit Indian mobile number'
+      : mobileTouched && !form.mobile
+        ? 'Enter a valid 10-digit Indian mobile number'
+        : ''
 
   // Compute progress
   const progress = useMemo(() => {
@@ -90,9 +103,9 @@ export default function Registration({ session, onComplete, onSignOut }) {
     if (form.village?.trim()) filled++
     if (form.district?.trim()) filled++
     if (form.state?.trim()) filled++
+    if (INDIAN_MOBILE_REGEX.test(form.mobile)) filled++
     if (form.primaryCrop) filled++
     if (form.cropStage) filled++
-    if (form.marketPreference) filled++
     if (form.latitude) filled++
     return Math.round((filled / total) * 100)
   }, [form])
@@ -101,63 +114,93 @@ export default function Registration({ session, onComplete, onSignOut }) {
     const errs = []
     if (!form.aadhaar.trim()) errs.push('Aadhaar number is required.')
     else if (form.aadhaar.length !== 12) errs.push('Aadhaar must be 12 digits.')
+    if (!INDIAN_MOBILE_REGEX.test(form.mobile)) {
+      errs.push('Enter a valid 10-digit Indian mobile number.')
+    }
     if (!form.preferredLanguage) errs.push('Please select preferred language.')
-    if (!form.village?.trim()) errs.push('Village is required.')
-    if (!form.district?.trim()) errs.push('District is required.')
-    if (!form.state?.trim()) errs.push('State is required.')
+    if (!isValidLocationText(form.village)) errs.push('Enter a valid village name.')
+    if (!isValidLocationText(form.district)) errs.push('Enter a valid district name.')
+    if (!isValidLocationText(form.state)) errs.push('Enter a valid state name.')
     if (form.landArea !== '' && (isNaN(Number(form.landArea)) || Number(form.landArea) <= 0))
       errs.push('Enter a valid land area.')
     if (!form.primaryCrop) errs.push('Primary crop is required.')
     if (!form.cropStage) errs.push('Current crop stage is required.')
-    if (!form.marketPreference) errs.push('Market preference is required.')
     return errs
   }
 
   const [locating, setLocating] = useState(false)
 
+  async function reverseGeocode(lat, lng) {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+      { headers: { 'Accept-Language': 'en' } },
+    )
+    if (!res.ok) throw new Error('Geocoding failed')
+    return res.json()
+  }
+
+  function parseNominatimAddress(addr = {}) {
+    return {
+      village:
+        addr.village ||
+        addr.town ||
+        addr.hamlet ||
+        addr.suburb ||
+        addr.city ||
+        addr.locality ||
+        '',
+      district: addr.state_district || addr.county || addr.district || '',
+      state: addr.state || '',
+    }
+  }
+
   async function handleUseLocation() {
     setLocating(true)
     setSubmitError('')
-
-    function saveCoords(lat, lng) {
-      update('latitude', lat)
-      update('longitude', lng)
-      setLocating(false)
-    }
-
-    async function fallbackIP() {
-      try {
-        const res = await fetch('https://ipapi.co/json/')
-        const d = await res.json()
-        if (d.latitude && d.longitude) {
-          saveCoords(d.latitude, d.longitude)
-          return
-        }
-      } catch {}
-      setLocating(false)
-    }
+    setLocationMessage('')
 
     if (!navigator.geolocation) {
-      await fallbackIP()
+      setLocationMessage(
+        'Location detection is not available. Please enter your village, district, and state manually.',
+      )
+      setLocating(false)
       return
     }
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => saveCoords(pos.coords.latitude, pos.coords.longitude),
-      () => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => saveCoords(pos.coords.latitude, pos.coords.longitude),
-          () => { fallbackIP() },
-          { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
-        )
+      async (pos) => {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        update('latitude', lat)
+        update('longitude', lng)
+        try {
+          const geo = await reverseGeocode(lat, lng)
+          const parsed = parseNominatimAddress(geo.address)
+          if (parsed.village) update('village', parsed.village)
+          if (parsed.district) update('district', parsed.district)
+          if (parsed.state) update('state', parsed.state)
+          setLocationMessage('Location detected and fields updated. You can edit them if needed.')
+        } catch {
+          setLocationMessage(
+            'GPS coordinates saved, but address lookup failed. Please enter your location manually.',
+          )
+        }
+        setLocating(false)
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      () => {
+        setLocationMessage(
+          'Could not detect your location. Please enter your village, district, and state manually.',
+        )
+        setLocating(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     )
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setSubmitError('')
+    setMobileTouched(true)
     const errs = getValidationErrors()
     if (errs.length) {
       setSubmitError(errs[0])
@@ -171,7 +214,8 @@ export default function Registration({ session, onComplete, onSignOut }) {
     setSubmitting(true)
     const result = await saveRegistration(userId, {
       ...form,
-      mobile: mobileFromAuth || null,
+      mobile: form.mobile || null,
+      marketPreference: 'mandi',
       landArea: form.landArea === '' ? null : form.landArea,
     })
     setSubmitting(false)
@@ -309,13 +353,20 @@ export default function Registration({ session, onComplete, onSignOut }) {
                     </p>
                   </div>
                   <div>
-                    <Label>Mobile number (from login)</Label>
-                    <div className="flex items-center gap-2 px-4 py-3.5 rounded-xl bg-stone-50 border-2 border-stone-200 text-stone-500 font-medium">
-                      <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3" />
-                      </svg>
-                      {mobileFromAuth || 'Not available'}
-                    </div>
+                    <Label required>Mobile number</Label>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      value={form.mobile}
+                      onChange={(e) => update('mobile', mobileOnly(e.target.value))}
+                      onBlur={() => setMobileTouched(true)}
+                      placeholder="10-digit mobile number"
+                      maxLength={10}
+                      className={`input-field ${mobileError ? 'border-red-300 focus:ring-red-400 focus:border-red-400' : ''}`}
+                    />
+                    {mobileError && (
+                      <p className="mt-2 text-xs text-red-600 font-medium">{mobileError}</p>
+                    )}
                   </div>
                   <div>
                     <Label required>Preferred language</Label>
@@ -340,7 +391,15 @@ export default function Registration({ session, onComplete, onSignOut }) {
 
                 <button
                   type="button"
-                  onClick={() => goStep(1)}
+                  onClick={() => {
+                    setMobileTouched(true)
+                    if (!INDIAN_MOBILE_REGEX.test(form.mobile)) {
+                      setSubmitError('Enter a valid 10-digit Indian mobile number.')
+                      return
+                    }
+                    setSubmitError('')
+                    goStep(1)
+                  }}
                   className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-300"
                 >
                   Continue to Location
@@ -371,24 +430,30 @@ export default function Registration({ session, onComplete, onSignOut }) {
                     {locating ? (
                       <>
                         <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                        Getting location...
+                        Detecting location...
                       </>
                     ) : form.latitude ? (
                       <>
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Location captured
+                        Detect my location
                       </>
                     ) : (
                       <>
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                         </svg>
-                        Tap to capture GPS location
+                        Detect my location
                       </>
                     )}
                   </button>
+
+                  {locationMessage && (
+                    <p className={`text-xs font-medium ${locationMessage.includes('Could not') || locationMessage.includes('not available') || locationMessage.includes('failed') ? 'text-amber-700' : 'text-emerald-600'}`}>
+                      {locationMessage}
+                    </p>
+                  )}
 
                   {form.latitude && form.longitude && (
                     <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 font-mono">
@@ -419,7 +484,22 @@ export default function Registration({ session, onComplete, onSignOut }) {
                   <button type="button" onClick={() => goStep(0)} className="flex-1 py-3.5 sm:py-4 rounded-xl border-2 border-stone-200 text-stone-600 font-bold hover:bg-stone-50 transition-all text-sm sm:text-base min-h-[44px]">
                     Back
                   </button>
-                  <button type="button" onClick={() => goStep(2)} className="flex-[2] py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold shadow-lg shadow-emerald-500/25 transition-all text-sm sm:text-base min-h-[44px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const locErrs = []
+                      if (!isValidLocationText(form.village)) locErrs.push('Enter a valid village name.')
+                      if (!isValidLocationText(form.district)) locErrs.push('Enter a valid district name.')
+                      if (!isValidLocationText(form.state)) locErrs.push('Enter a valid state name.')
+                      if (locErrs.length) {
+                        setSubmitError(locErrs[0])
+                        return
+                      }
+                      setSubmitError('')
+                      goStep(2)
+                    }}
+                    className="flex-[2] py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold shadow-lg shadow-emerald-500/25 transition-all text-sm sm:text-base min-h-[44px]"
+                  >
                     Continue to Farm
                   </button>
                 </div>
@@ -573,57 +653,6 @@ export default function Registration({ session, onComplete, onSignOut }) {
                   </div>
                 </div>
 
-                <div className="flex gap-2 sm:gap-3">
-                  <button type="button" onClick={() => goStep(2)} className="flex-1 py-3.5 sm:py-4 rounded-xl border-2 border-stone-200 text-stone-600 font-bold hover:bg-stone-50 transition-all text-sm sm:text-base min-h-[44px]">
-                    Back
-                  </button>
-                  <button type="button" onClick={() => goStep(4)} className="flex-[2] py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold shadow-lg shadow-emerald-500/25 transition-all text-sm sm:text-base min-h-[44px]">
-                    Continue to Market
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Market */}
-            {currentStep === 4 && (
-              <div className="space-y-4 animate-slide-up">
-                <div className="mb-4 sm:mb-6">
-                  <h2 className="text-xl sm:text-2xl font-bold text-stone-800">Market preference</h2>
-                  <p className="text-stone-500 text-xs sm:text-sm mt-1">Where do you sell your produce?</p>
-                </div>
-
-                <div className="space-y-3">
-                  {MARKET_OPTIONS.map((o) => (
-                    <button
-                      key={o.value}
-                      type="button"
-                      onClick={() => update('marketPreference', o.value)}
-                      className={`w-full flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-300 hover-lift ${
-                        form.marketPreference === o.value
-                          ? 'border-emerald-400 bg-emerald-50 shadow-md shadow-emerald-500/10'
-                          : 'border-stone-200 bg-white hover:border-emerald-200'
-                      }`}
-                    >
-                      <span className="text-3xl">{o.icon}</span>
-                      <div className="flex-1">
-                        <p className="font-bold text-stone-800">{o.label}</p>
-                        <p className="text-sm text-stone-500">{o.desc}</p>
-                      </div>
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                        form.marketPreference === o.value
-                          ? 'border-emerald-500 bg-emerald-500'
-                          : 'border-stone-300'
-                      }`}>
-                        {form.marketPreference === o.value && (
-                          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
                 {/* Completion summary */}
                 <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-5 space-y-3">
                   <div className="flex items-center justify-between">
@@ -636,7 +665,7 @@ export default function Registration({ session, onComplete, onSignOut }) {
                 </div>
 
                 <div className="flex gap-2 sm:gap-3">
-                  <button type="button" onClick={() => goStep(3)} className="flex-1 py-3.5 sm:py-4 rounded-xl border-2 border-stone-200 text-stone-600 font-bold hover:bg-stone-50 transition-all text-sm sm:text-base min-h-[44px]">
+                  <button type="button" onClick={() => goStep(2)} className="flex-1 py-3.5 sm:py-4 rounded-xl border-2 border-stone-200 text-stone-600 font-bold hover:bg-stone-50 transition-all text-sm sm:text-base min-h-[44px]">
                     Back
                   </button>
                   <button

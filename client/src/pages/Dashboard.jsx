@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { loadRegistration, updateRegistration } from "../lib/registration";
+import { useNavigate } from "react-router-dom";
+import { loadRegistration } from "../lib/registration";
 import { fetchFarmWeatherBundle } from "../lib/farmWeather";
 import { GoogleTranslateWidget } from "../translation";
 import GovernmentSchemes from "../components/GovernmentSchemes";
@@ -63,6 +64,7 @@ function Icon({ d, className = "w-5 h-5" }) {
 }
 
 export default function Dashboard({ session, onSignOut }) {
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [profile, setProfile] = useState(null);
@@ -220,7 +222,13 @@ export default function Dashboard({ session, onSignOut }) {
           </button>
 
           {/* Profile */}
-          <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-stone-200 shrink-0">
+          <button
+            type="button"
+            onClick={() => navigate("/profile")}
+            className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-stone-200 shrink-0 rounded-lg hover:bg-stone-100 transition-colors"
+            aria-label="Open profile"
+            title="Open profile"
+          >
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-[11px] font-bold text-white">
               {initials}
             </div>
@@ -232,7 +240,7 @@ export default function Dashboard({ session, onSignOut }) {
                 {session?.mobile || ""}
               </p>
             </div>
-          </div>
+          </button>
         </header>
 
         {/* Content */}
@@ -242,7 +250,7 @@ export default function Dashboard({ session, onSignOut }) {
               session={session}
               profile={profile}
               greeting={greeting}
-              onProfileUpdate={setProfile}
+              onOpenProfile={() => navigate("/profile")}
             />
           )}
           {activeTab === "weather" && <WeatherTab profile={profile} />}
@@ -913,21 +921,15 @@ const PROFILE_STAGE_OPTIONS = [
 
 const PROFILE_LANGUAGE_OPTIONS = ["english", "hindi", "gujarati"];
 const PROFILE_LAND_UNIT_OPTIONS = ["acre", "hectare"];
-const PROFILE_MARKET_OPTIONS = [
-  "local_mandi",
-  "district_mandi",
-  "state_mandi",
-  "export_market",
-];
+const PROFILE_MARKET_OPTIONS = ["mandi"];
 
-function OverviewTab({ session, profile, greeting, onProfileUpdate }) {
+function OverviewTab({ session, profile, greeting, onOpenProfile }) {
   const now = new Date();
   const [viewingYear, setViewingYear] = useState(now.getFullYear());
   const [viewingMonth, setViewingMonth] = useState(now.getMonth());
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null);
-
+  const isEditingProfile = false;
+  const savingProfile = false;
+  const saveStatus = null;
   const buildProfileForm = useCallback(
     (source) => ({
       farmer_name: source?.farmer_name || session?.name || "",
@@ -942,80 +944,17 @@ function OverviewTab({ session, profile, greeting, onProfileUpdate }) {
       village: source?.village || "",
       district: source?.district || "",
       state: source?.state || "",
-      market_preference: source?.market_preference || "",
+      market_preference: "mandi",
     }),
     [session?.name],
   );
-
-  const [profileForm, setProfileForm] = useState(() => buildProfileForm(profile));
-
-  useEffect(() => {
-    if (!isEditingProfile) {
-      setProfileForm(buildProfileForm(profile));
-    }
-  }, [profile, isEditingProfile, buildProfileForm]);
-
+  const profileForm = buildProfileForm(profile);
   const cropOptions = Array.from(
     new Set([profileForm.primary_crop, ...PROFILE_CROP_OPTIONS].filter(Boolean)),
   );
-
-  const handleFormField = (field, value) => {
-    setProfileForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const startEditingProfile = () => {
-    setSaveStatus(null);
-    setProfileForm(buildProfileForm(profile));
-    setIsEditingProfile(true);
-  };
-
-  const cancelEditingProfile = () => {
-    setSaveStatus(null);
-    setProfileForm(buildProfileForm(profile));
-    setIsEditingProfile(false);
-  };
-
-  const saveProfileChanges = async () => {
-    if (!session?.id) {
-      setSaveStatus({ type: "error", message: "Session expired. Please sign in again." });
-      return;
-    }
-
-    setSavingProfile(true);
-    setSaveStatus(null);
-    try {
-      const parsedLandArea = Number.parseFloat(profileForm.land_area);
-      const payload = {
-        farmer_name: profileForm.farmer_name.trim() || null,
-        preferred_language: profileForm.preferred_language.trim() || null,
-        primary_crop: profileForm.primary_crop.trim() || null,
-        crop_stage: profileForm.crop_stage.trim() || null,
-        land_area: Number.isFinite(parsedLandArea) ? parsedLandArea : null,
-        land_unit: profileForm.land_unit.trim() || null,
-        village: profileForm.village.trim() || null,
-        district: profileForm.district.trim() || null,
-        state: profileForm.state.trim() || null,
-        market_preference: profileForm.market_preference.trim() || null,
-      };
-
-      const { data, error } = await updateRegistration(session.id, payload);
-
-      if (error) throw error;
-
-      const updatedProfile = data || { ...(profile || {}), ...payload };
-      onProfileUpdate?.(updatedProfile);
-      setProfileForm(buildProfileForm(updatedProfile));
-      setIsEditingProfile(false);
-      setSaveStatus({ type: "success", message: "Farm profile updated successfully." });
-    } catch (err) {
-      setSaveStatus({
-        type: "error",
-        message: err?.message || "Failed to update farm profile.",
-      });
-    } finally {
-      setSavingProfile(false);
-    }
-  };
+  const handleFormField = () => {};
+  const cancelEditingProfile = () => {};
+  const saveProfileChanges = () => {};
 
   const goPrevMonth = () => {
     if (viewingMonth === 0) {
@@ -1138,262 +1077,60 @@ function OverviewTab({ session, profile, greeting, onProfileUpdate }) {
         {/* Farm Details */}
         <div className="lg:col-span-2 rounded-2xl bg-white border border-stone-200/80 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between gap-3">
-            <h3 className="font-bold text-stone-800">Farm Profile</h3>
-            {!isEditingProfile ? (
-              <button
-                type="button"
-                onClick={startEditingProfile}
-                className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors"
-              >
-                Update Info
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={cancelEditingProfile}
-                  disabled={savingProfile}
-                  className="text-xs font-semibold text-stone-600 bg-stone-100 border border-stone-200 px-3 py-1.5 rounded-full hover:bg-stone-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={saveProfileChanges}
-                  disabled={savingProfile}
-                  className="text-xs font-semibold text-white bg-emerald-600 border border-emerald-600 px-3 py-1.5 rounded-full hover:bg-emerald-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {savingProfile ? "Saving..." : "Save"}
-                </button>
-              </div>
-            )}
+            <div>
+              <h3 className="font-bold text-stone-800">Farm Profile</h3>
+              <p className="text-xs text-stone-400 mt-0.5">
+                Update registration details from your dedicated profile page.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors"
+            >
+              Edit Profile
+            </button>
           </div>
           <div className="p-6">
-            {saveStatus && (
-              <div
-                className={`mb-4 rounded-xl border px-3 py-2 text-sm ${saveStatus.type === "success"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "border-red-200 bg-red-50 text-red-700"
-                  }`}
-              >
-                {saveStatus.message}
-              </div>
-            )}
-
-            {isEditingProfile ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                <label className="block">
-                  <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                    Farmer Name
-                  </span>
-                  <input
-                    type="text"
-                    value={profileForm.farmer_name}
-                    onChange={(e) => handleFormField("farmer_name", e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                  />
-                </label>
-
-                <InfoRow
-                  label="Mobile"
-                  value={profile?.mobile || session?.mobile || "â€”"}
-                />
-
-                <label className="block">
-                  <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                    Language
-                  </span>
-                  <select
-                    value={profileForm.preferred_language}
-                    onChange={(e) =>
-                      handleFormField("preferred_language", e.target.value)
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                  >
-                    <option value="">Select language...</option>
-                    {PROFILE_LANGUAGE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {cap(option)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                    Primary Crop
-                  </span>
-                  <select
-                    value={profileForm.primary_crop}
-                    onChange={(e) => handleFormField("primary_crop", e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                  >
-                    <option value="">Select crop...</option>
-                    {cropOptions.map((crop) => (
-                      <option key={crop} value={crop}>
-                        {cap(crop)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                    Crop Stage
-                  </span>
-                  <select
-                    value={profileForm.crop_stage}
-                    onChange={(e) => handleFormField("crop_stage", e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                  >
-                    <option value="">Select stage...</option>
-                    {PROFILE_STAGE_OPTIONS.map((stage) => (
-                      <option key={stage} value={stage}>
-                        {cap(stage.replace(/-/g, " "))}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="block">
-                    <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                      Land Area
-                    </span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={profileForm.land_area}
-                      onChange={(e) => handleFormField("land_area", e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                      Unit
-                    </span>
-                    <select
-                      value={profileForm.land_unit}
-                      onChange={(e) => handleFormField("land_unit", e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                    >
-                      <option value="">Select unit...</option>
-                      {PROFILE_LAND_UNIT_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {cap(option)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                <label className="block">
-                  <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                    Village
-                  </span>
-                  <input
-                    type="text"
-                    value={profileForm.village}
-                    onChange={(e) => handleFormField("village", e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                    District
-                  </span>
-                  <input
-                    type="text"
-                    value={profileForm.district}
-                    onChange={(e) => handleFormField("district", e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                    State
-                  </span>
-                  <input
-                    type="text"
-                    value={profileForm.state}
-                    onChange={(e) => handleFormField("state", e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5 block">
-                    Market
-                  </span>
-                  <select
-                    value={profileForm.market_preference}
-                    onChange={(e) =>
-                      handleFormField("market_preference", e.target.value)
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                  >
-                    <option value="">Select market...</option>
-                    {PROFILE_MARKET_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {cap(option.replace(/_/g, " "))}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                <InfoRow
-                  label="Farmer Name"
-                  value={profile?.farmer_name || session?.name || "â€”"}
-                />
-                <InfoRow
-                  label="Mobile"
-                  value={profile?.mobile || session?.mobile || "â€”"}
-                />
-                <InfoRow
-                  label="Language"
-                  value={
-                    profile?.preferred_language
-                      ? cap(profile.preferred_language)
-                      : "â€”"
-                  }
-                />
-                <InfoRow
-                  label="Primary Crop"
-                  value={profile?.primary_crop ? cap(profile.primary_crop) : "â€”"}
-                />
-                <InfoRow
-                  label="Crop Stage"
-                  value={profile?.crop_stage ? cap(profile.crop_stage) : "â€”"}
-                />
-                <InfoRow
-                  label="Land Area"
-                  value={
-                    profile?.land_area
-                      ? `${profile.land_area} ${profile.land_unit || ""}`
-                      : "â€”"
-                  }
-                />
-                <InfoRow label="Village" value={profile?.village || "â€”"} />
-                <InfoRow label="District" value={profile?.district || "â€”"} />
-                <InfoRow label="State" value={profile?.state || "â€”"} />
-                <InfoRow
-                  label="Market"
-                  value={
-                    profile?.market_preference
-                      ? cap(profile.market_preference.replace(/_/g, " "))
-                      : "â€”"
-                  }
-                />
-              </div>
-            )}
-          </div>
-        </div>
-        {/* SAR Status */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+              <InfoRow
+                label="Farmer Name"
+                value={profile?.farmer_name || session?.name || "—"}
+              />
+              <InfoRow
+                label="Mobile"
+                value={profile?.mobile || session?.mobile || "—"}
+              />
+              <InfoRow
+                label="Language"
+                value={
+                  profile?.preferred_language
+                    ? cap(profile.preferred_language)
+                    : "—"
+                }
+              />
+              <InfoRow
+                label="Primary Crop"
+                value={profile?.primary_crop ? cap(profile.primary_crop) : "—"}
+              />
+              <InfoRow
+                label="Crop Stage"
+                value={profile?.crop_stage ? cap(profile.crop_stage) : "—"}
+              />
+              <InfoRow
+                label="Land Area"
+                value={
+                  profile?.land_area
+                    ? `${profile.land_area} ${profile.land_unit || ""}`
+                    : "—"
+                }
+              />
+              <InfoRow label="Village" value={profile?.village || "—"} />
+              <InfoRow label="District" value={profile?.district || "—"} />
+              <InfoRow label="State" value={profile?.state || "—"} />
+              <InfoRow label="Market" value="Mandi" />
+            </div>
+          </div>        {/* SAR Status */}
         <div className="rounded-2xl bg-white border border-stone-200/80 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-stone-100">
             <h3 className="font-bold text-stone-800">SAR Satellite</h3>
