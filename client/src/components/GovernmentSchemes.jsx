@@ -382,6 +382,34 @@
           )}
         </div>
 
+        {/* ── Helpline Support ── */}
+        <div className="rounded-xl sm:rounded-2xl bg-white border border-stone-200/80 shadow-sm overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-stone-100">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-lg shadow-md shrink-0">
+                ☎
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-emerald-600">Help Line No.</p>
+                <h3 className="font-bold text-stone-800 text-sm sm:text-base mt-1">National Kisan Call Centre (KCC)</h3>
+                <p className="text-xs text-stone-500 mt-1">Quick support for farmers who need help with agriculture and scheme-related queries.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-4 sm:px-6 py-4 sm:py-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Toll-free</p>
+              <p className="text-lg sm:text-xl font-extrabold text-stone-800 mt-1">1800-180-1551</p>
+            </div>
+            <div className="rounded-xl bg-stone-50 border border-stone-200 p-4">
+              <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Available</p>
+              <p className="text-sm font-semibold text-stone-800 mt-1">6:00 AM - 10:00 PM</p>
+              <p className="text-xs text-stone-500 mt-1">All seven days</p>
+            </div>
+          </div>
+        </div>
+
         {/* ── Insurance Claim Section ── */}
         <div className="rounded-2xl bg-white border border-stone-200/80 shadow-sm overflow-hidden">
           <div

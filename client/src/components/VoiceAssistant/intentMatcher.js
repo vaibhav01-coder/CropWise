@@ -144,6 +144,29 @@ const FAQ_ENTRIES = [
     suggestTab: "schemes",
   },
   {
+    id: "kisan_helpline",
+    keywords: {
+      en: [
+        "national kisan call centre",
+        "kisan call centre",
+        "kisan helpline",
+        "kcc helpline",
+        "farmer helpline",
+        "helpline number",
+        "scheme helpline",
+      ],
+      hi: ["किसान कॉल सेंटर", "किसान हेल्पलाइन", "हेल्पलाइन नंबर", "केसीसी हेल्पलाइन"],
+      gu: ["કિસાન કોલ સેન્ટર", "ખેડૂત હેલ્પલાઇન", "હેલ્પલાઇન નંબર", "કેસીસી હેલ્પલાઇન"],
+    },
+    replies: {
+      en: "National Kisan Call Centre (KCC) helpline: 1800-180-1551. It is toll-free and available from 6:00 AM to 10:00 PM, all seven days.",
+      hi: "नेशनल किसान कॉल सेंटर (KCC) हेल्पलाइन 1800-180-1551 है। यह टोल-फ्री है और सुबह 6:00 बजे से रात 10:00 बजे तक, सप्ताह के सातों दिन उपलब्ध है।",
+      gu: "નેશનલ કિસાન કોલ સેન્ટર (KCC) હેલ્પલાઇન 1800-180-1551 છે. આ ટોલ-ફ્રી છે અને સવારે 6:00 થી રાત્રે 10:00 સુધી, અઠવાડિયાના સાતેય દિવસ ઉપલબ્ધ છે.",
+    },
+    suggestTab: "schemes",
+    redirect: true,
+  },
+  {
     id: "mandi_how",
     keywords: {
       en: ["how mandi works", "how to get mandi price", "price forecast"],
@@ -238,7 +261,7 @@ export async function matchIntentByLLM(_message, _language = "en", _context = {}
 
 /**
  * Static FAQ matching — client-side, offline.
- * @returns {{ intent: 'faq', reply: string, suggestTab?: string } | null}
+ * @returns {{ intent: 'faq', reply: string, suggestTab?: string, redirect?: boolean } | null}
  */
 export function matchFAQ(message, language = "en") {
   const lang = languageOrEn(language);
@@ -253,6 +276,7 @@ export function matchFAQ(message, language = "en") {
           intent: "faq",
           reply: entry.replies[lang] || entry.replies.en,
           suggestTab: entry.suggestTab,
+          redirect: entry.redirect === true,
         };
       }
     }
@@ -304,6 +328,24 @@ export async function processUserMessage(message, language = "en", options = {})
 
   const faqMatch = matchFAQ(message, lang);
   if (faqMatch) {
+    if (faqMatch.redirect && faqMatch.suggestTab && isValidTabId(faqMatch.suggestTab)) {
+      const tabLabel = getTabLabel(faqMatch.suggestTab, lang);
+      const navReplies = {
+        en: (label) => `Opening ${label} for you now.`,
+        hi: (label) => `अब ${label} खोल रहा हूं।`,
+        gu: (label) => `હવે ${label} ખોલી રહ્યો છું.`,
+      };
+      const replyFn = navReplies[lang] || navReplies.en;
+      return {
+        intent: "navigate",
+        targetTab: faqMatch.suggestTab,
+        reply: canNavigate
+          ? `${faqMatch.reply} ${replyFn(tabLabel)}`
+          : `${faqMatch.reply} ${getLoginFirstMessage(lang)}`,
+        shouldNavigate: canNavigate,
+      };
+    }
+
     return {
       intent: "faq",
       reply: faqMatch.reply,
