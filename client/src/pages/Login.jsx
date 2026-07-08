@@ -3,20 +3,28 @@ import { supabase, setLocalSession, formatSupabaseQueryError, isSupabaseConfigur
 import { localSignUp, localLogin } from '../lib/localDb'
 import { GoogleTranslateWidget } from '../translation'
 
+const INDIAN_MOBILE_REGEX = /^[6-9]\d{9}$/
+
 export default function Login({ onLogin }) {
   const [isSignUp, setIsSignUp] = useState(false)
   const [name, setName] = useState('')
   const [mobile, setMobile] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [signUpMobileTouched, setSignUpMobileTouched] = useState(false)
 
   const mobileOnly = (v) => v.replace(/\D/g, '').slice(0, 10)
+  const signUpMobileError =
+    isSignUp && signUpMobileTouched && !INDIAN_MOBILE_REGEX.test(mobile)
+      ? 'Enter a valid 10-digit Indian mobile number starting with 6-9'
+      : ''
 
   async function handleSignUp(e) {
     e.preventDefault()
     setError('')
+    setSignUpMobileTouched(true)
     if (!name.trim()) { setError('Please enter your name.'); return }
-    if (mobile.length !== 10) { setError('Please enter a valid 10-digit mobile number.'); return }
+    if (!INDIAN_MOBILE_REGEX.test(mobile)) return
 
     setLoading(true)
     let data
@@ -133,7 +141,7 @@ export default function Login({ onLogin }) {
           <div className="flex border-b border-white/[0.06]">
             <button
               type="button"
-              onClick={() => { setIsSignUp(false); setError('') }}
+              onClick={() => { setIsSignUp(false); setError(''); setSignUpMobileTouched(false) }}
               className={`flex-1 py-4 text-sm font-semibold tracking-wide transition-all duration-300 ${
                 !isSignUp
                   ? 'text-white bg-white/[0.06] border-b-2 border-emerald-400'
@@ -144,7 +152,7 @@ export default function Login({ onLogin }) {
             </button>
             <button
               type="button"
-              onClick={() => { setIsSignUp(true); setError('') }}
+              onClick={() => { setIsSignUp(true); setError(''); setSignUpMobileTouched(false) }}
               className={`flex-1 py-4 text-sm font-semibold tracking-wide transition-all duration-300 ${
                 isSignUp
                   ? 'text-white bg-white/[0.06] border-b-2 border-emerald-400'
@@ -205,6 +213,9 @@ export default function Login({ onLogin }) {
                     type="tel"
                     value={mobile}
                     onChange={(e) => setMobile(mobileOnly(e.target.value))}
+                    onBlur={() => {
+                      if (isSignUp) setSignUpMobileTouched(true)
+                    }}
                     placeholder="10-digit mobile number"
                     inputMode="numeric"
                     maxLength={10}
@@ -212,6 +223,9 @@ export default function Login({ onLogin }) {
                     autoComplete="tel"
                   />
                 </div>
+                {signUpMobileError && (
+                  <p className="mt-2 text-xs text-red-300 font-medium">{signUpMobileError}</p>
+                )}
               </div>
 
               {/* Submit button */}
