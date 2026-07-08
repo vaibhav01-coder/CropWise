@@ -28,6 +28,16 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (proxyPath) => proxyPath.replace(/^\/disease-api/, '/disease'),
       },
+      '/tts-api': {
+        target: AIML_TARGET,
+        changeOrigin: true,
+        rewrite: (proxyPath) => proxyPath.replace(/^\/tts-api/, '/tts/speak'),
+      },
+      '/tts-google': {
+        target: 'https://translate.googleapis.com',
+        changeOrigin: true,
+        rewrite: (proxyPath) => proxyPath.replace(/^\/tts-google/, '/translate_tts'),
+      },
       // PMFBY PDFs only; avoid using '/schemes' alone.
       '/schemes/static': { target: AIML_TARGET, changeOrigin: true },
     },

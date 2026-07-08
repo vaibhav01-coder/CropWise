@@ -98,6 +98,20 @@ export default function Dashboard({ session, onSignOut }) {
     setMobileSidebar(false);
   }
 
+  useEffect(() => {
+    const handleVoiceAssistantNavigate = (event) => {
+      const nextTab = event?.detail?.tab;
+      if (!NAV_ITEMS.some((item) => item.id === nextTab)) return;
+      setActiveTab(nextTab);
+      setMobileSidebar(false);
+    };
+
+    window.addEventListener("cropwise:navigate", handleVoiceAssistantNavigate);
+    return () => {
+      window.removeEventListener("cropwise:navigate", handleVoiceAssistantNavigate);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen min-h-[100dvh] flex bg-[#f8faf9] overflow-x-hidden">
       {/* Mobile overlay */}

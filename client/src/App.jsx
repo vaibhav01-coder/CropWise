@@ -5,6 +5,7 @@ import Registration from './pages/Registration'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import { TranslationProvider } from './translation/TranslationProvider'
+import VoiceAssistantWidget from './components/VoiceAssistant/VoiceAssistantWidget'
 
 function App() {
   const { session, registrationComplete, loading, refresh, signOut } = useAuth()
@@ -89,6 +90,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      <VoiceAssistantWidget />
     </TranslationProvider>
   )
 }
