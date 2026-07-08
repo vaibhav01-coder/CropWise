@@ -85,8 +85,11 @@ export default function DiseaseCheckUpload({ profile }) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="font-bold text-stone-800">Upload Photo</h3>
-              <p className="text-sm text-stone-500 mt-1">
+             <p className="text-sm text-stone-500 mt-1">
                 Accepted formats: JPG, PNG, or WEBP.
+              </p>
+              <p className="text-xs text-amber-600 mt-1.5">
+                For best results, upload a clear, close-up photo of a single plant leaf. Accuracy may be lower for unrelated images.
               </p>
             </div>
             <div className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
