@@ -88,9 +88,9 @@ export default function Registration({ session, onComplete, onSignOut }) {
 
   const mobileError =
     mobileTouched && form.mobile && !INDIAN_MOBILE_REGEX.test(form.mobile)
-      ? 'Enter a valid 10-digit Indian mobile number'
+      ? 'Enter a valid 10-digit Indian mobile number starting with 6-9'
       : mobileTouched && !form.mobile
-        ? 'Enter a valid 10-digit Indian mobile number'
+        ? 'Enter a valid 10-digit Indian mobile number starting with 6-9'
         : ''
 
   // Compute progress
@@ -115,7 +115,7 @@ export default function Registration({ session, onComplete, onSignOut }) {
     if (!form.aadhaar.trim()) errs.push('Aadhaar number is required.')
     else if (form.aadhaar.length !== 12) errs.push('Aadhaar must be 12 digits.')
     if (!INDIAN_MOBILE_REGEX.test(form.mobile)) {
-      errs.push('Enter a valid 10-digit Indian mobile number.')
+      errs.push('Enter a valid 10-digit Indian mobile number starting with 6-9.')
     }
     if (!form.preferredLanguage) errs.push('Please select preferred language.')
     if (!isValidLocationText(form.village)) errs.push('Enter a valid village name.')
@@ -357,6 +357,8 @@ export default function Registration({ session, onComplete, onSignOut }) {
                     <input
                       type="tel"
                       inputMode="numeric"
+                      pattern="[6-9][0-9]{9}"
+                      title="Enter a valid 10-digit Indian mobile number starting with 6-9"
                       value={form.mobile}
                       onChange={(e) => update('mobile', mobileOnly(e.target.value))}
                       onBlur={() => setMobileTouched(true)}
@@ -394,7 +396,7 @@ export default function Registration({ session, onComplete, onSignOut }) {
                   onClick={() => {
                     setMobileTouched(true)
                     if (!INDIAN_MOBILE_REGEX.test(form.mobile)) {
-                      setSubmitError('Enter a valid 10-digit Indian mobile number.')
+                      setSubmitError('Enter a valid 10-digit Indian mobile number starting with 6-9.')
                       return
                     }
                     setSubmitError('')
