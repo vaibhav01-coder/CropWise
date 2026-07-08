@@ -154,10 +154,15 @@ async def predict(file: UploadFile = File(...)):
                 condition=condition,
             )
         )
-
     top = results[0]
+    advice = (
+        "Could not confidently identify a plant disease in this image. "
+        "Please upload a clear, close-up photo of a single plant leaf."
+        if top.confidence < 60
+        else _basic_advice(top.condition)
+     )
     return PredictionResponse(
         top_prediction=top,
         all_predictions=results,
-        advice=_basic_advice(top.condition),
+        advice=advice,
     )
