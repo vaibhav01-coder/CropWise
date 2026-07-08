@@ -6,7 +6,6 @@ import { GoogleTranslateWidget } from "../translation";
 import GovernmentSchemes from "../components/GovernmentSchemes";
 import DiseaseCheckUpload from "../components/DiseaseCheckUpload";
 import FertilizerAdvisor from "../components/FertilizerAdvisor";
-import AskKisanAI from "../components/AskKisanAI";
 
 /* â”€â”€â”€ SVG icon paths â”€â”€â”€ */
 const ICONS = {
@@ -38,7 +37,6 @@ const ICONS = {
     "M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z",
   schemes:
     "M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z",
-  mic: "M12 1.5c-1.5 0-2.7 1.2-2.7 2.7v5.4c0 1.5 1.2 2.7 2.7 2.7s2.7-1.2 2.7-2.7V4.2c0-1.5-1.2-2.7-2.7-2.7zm-4.5 8.1v.9c0 2.5 2 4.5 4.5 4.5s4.5-2 4.5-4.5v-.9M12 17.25v3.75m-3.75 0h7.5",
 };
 
 const NAV_ITEMS = [
@@ -51,7 +49,6 @@ const NAV_ITEMS = [
   { id: "schemes", label: "Govt Schemes", icon: ICONS.schemes },
   { id: "alerts", label: "Alert System", icon: ICONS.alerts },
   { id: "calendar", label: "Adaptive Calendar", icon: ICONS.calendar },
-  { id: "ask-kisan", label: "Ask Kisan AI", icon: ICONS.mic },
 ];
 
 function Icon({ d, className = "w-5 h-5" }) {
@@ -267,9 +264,6 @@ export default function Dashboard({ session, onSignOut }) {
           {activeTab === "alerts" && <AlertSystemTab profile={profile} />}
           {activeTab === "calendar" && (
             <AdaptiveCalendarTab profile={profile} />
-          )}
-          {activeTab === "ask-kisan" && (
-            <AskKisanAI profile={profile} session={session} />
           )}
         </main>
       </div>
@@ -1079,10 +1073,6 @@ function OverviewTab({ session, profile, greeting, onOpenProfile }) {
           }
           iconPath={ICONS.satellite}
         />
-      </div>
-
-      <div className="rounded-2xl bg-white border border-stone-200/80 shadow-sm overflow-hidden">
-        <AskKisanAI profile={profile} session={session} />
       </div>
 
       {/* Detail cards */}
