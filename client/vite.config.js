@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const AIML_TARGET = process.env.VITE_AIML_PROXY_TARGET || 'http://localhost:8001'
+const AIML_TARGET = process.env.VITE_AIML_PROXY_TARGET || 'http://localhost:8000'
 
 export default defineConfig({
   envDir: path.resolve(__dirname, '..'),

@@ -60,7 +60,8 @@ BeejRakshak/
 ├── server/                 # Express backend (API, proxy to Supabase)
 ├── mobile/                 # Expo / React Native app
 ├── AIML/                   # Unified AI/ML service
-│   ├── main.py             # FastAPI app: mounts /mandi, /schemes
+│   ├── main.py             # FastAPI app: mounts /mandi, /schemes, /voice
+│   ├── voice_assistant.py  # Ollama-powered farming assistant
 │   ├── mandi_intelligence/ # Mandi API + ml_arbitrage + dataset
 │   └── scrapbot/           # Scheme scraper, matcher, claim PDFs
 ├── sar_processing/        # GEE SAR worker, DB, anomaly logic
@@ -78,6 +79,94 @@ BeejRakshak/
    - Web: `npm run dev` → frontend http://localhost:5173, backend http://localhost:3001; client proxies `/api` → 3001, `/mandi-api` and `/schemes-api` → 8000.
    - AIML: `cd AIML && python main.py` or `uvicorn main:app --host 0.0.0.0 --port 8000` → `/mandi`, `/schemes`, `/docs`.
    - SAR: `cd sar_processing && python worker.py` (after GEE auth and DB bootstrap).
+
+---
+
+## Kisan AI Chatbot (Voice Assistant)
+
+**AI-powered multilingual farming assistant** integrated into the Dashboard. Farmers can ask agriculture-related questions using text or voice and receive personalised advice — all running locally via Ollama.
+
+### Technology Used
+
+| Component | Technology |
+|-----------|------------|
+| AI Runtime | Ollama |
+| LLM | qwen3:1.7b |
+| Backend | FastAPI (`voice_assistant.py`) |
+| Frontend | React (`AskKisanAI.jsx`) |
+| Speech-to-Text | Browser Speech Recognition API |
+| Text-to-Speech | Browser Speech Synthesis API |
+
+### Ollama Setup
+
+1. **Install Ollama** from [https://ollama.com](https://ollama.com).
+2. **Pull the model**:
+   ```bash
+   ollama pull qwen3:1.7b
+   ```
+3. **Verify**:
+   ```bash
+   ollama list
+   ```
+   Expected output includes `qwen3:1.7b`.
+
+This project is configured to use **qwen3:1.7b**. To use a different model, update the `OLLAMA_MODEL` environment variable.
+
+### Environment Variables
+
+Create `AIML/.env` (see `AIML/.env.example`):
+
+```env
+OLLAMA_URL=http://localhost:11434
+OLLAMA_MODEL=qwen3:1.7b
+```
+
+| Variable | Description |
+|----------|-------------|
+| `OLLAMA_URL` | Address of the Ollama server (default: http://localhost:11434) |
+| `OLLAMA_MODEL` | Ollama model name (currently `qwen3:1.7b`) |
+
+### Running the Chatbot
+
+1. **Start Ollama** (desktop app or `ollama serve`).
+2. **Verify** the model: `ollama list` should show `qwen3:1.7b`.
+3. **Start the AIML backend**:
+   ```bash
+   cd AIML
+   python main.py
+   # or: uvicorn main:app --host 0.0.0.0 --port 8000
+   ```
+4. **Start the frontend**: `npm run dev` (from repo root).
+5. **Open** http://localhost:5173 → Dashboard.
+6. **Use** the "Ask Kisan AI" card.
+
+### Repository Layout
+
+```
+AIML/
+├── main.py                # FastAPI app: mounts /mandi, /schemes, /voice
+├── voice_assistant.py     # Ollama-powered farming assistant
+├── mandi_intelligence/    # Mandi API + ml_arbitrage + dataset
+└── scrapbot/              # Scheme scraper, matcher, claim PDFs
+
+client/src/components/
+└── AskKisanAI.jsx         # AI Chatbot chat interface
+```
+
+### Troubleshooting
+
+| Problem | Likely Cause | Solution |
+|---------|-------------|----------|
+| No AI response | Ollama not running | Start Ollama and verify with `ollama list` |
+| Model not found | `qwen3:1.7b` not pulled | Run `ollama pull qwen3:1.7b` |
+| Slow responses | Low RAM / CPU | Close other apps; 8 GB+ RAM recommended |
+| Connection refused | Wrong `OLLAMA_URL` | Ensure Ollama is on http://localhost:11434 |
+
+### Important Notes
+
+- Do **not** commit `.env`. Use `.env.example` as a template.
+- Ensure `qwen3:1.7b` is installed **before** running the project.
+- Ollama must be running **before** starting the AIML backend.
 
 ---
 
